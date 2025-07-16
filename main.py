@@ -95,42 +95,105 @@ if __name__ == "__main__":
     ### ADDITIONAL KRAUSS PARAMS additionalParam={"sigma": "0", "sigmaStep": "1"}
     ### ADDITIONAL IDM PARAMS additionalParam={"delta": "6","stepping": "0.1"})
     ### ADDITIONAL W99 PARAMS additionalParam={"cc1": "1.5", "cc2": "10.0"})
+
     # This loop is made for an automated testing of Krauss car-following model with all its combinations
-    for i in range(1):
-        time.sleep(1)
+    for i in range(18):
+        # time.sleep(10)
         if i == 0:
             twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, carFollowingModel=carFollowingModel,
-                                               macroModelType=macroModelType, tau="1", parameters={"sigma": "0.5", "sigmaStep": "2"},
-                                               date=simulationDate, timeslot=[23,24], edge_id=edge_id)
+                                               macroModelType=macroModelType, tau="1", parameters={"sigma": "0.5", "sigmaStep": "1"},
+                                               date=simulationDate, timeslot=[0,24], edge_id=edge_id)
         elif i == 1:
             twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
-                                                 carFollowingModel=carFollowingModel,
+                                                 carFollowingModel="Krauss",
                                                  macroModelType=macroModelType, tau="1",
                                                  parameters={"sigma": "1", "sigmaStep": "5"},
                                                  date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
         elif i == 2:
             twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
-                                                 carFollowingModel=carFollowingModel,
+                                                 carFollowingModel="Krauss",
                                                  macroModelType=macroModelType, tau="1",
                                                  parameters={"sigma": "0", "sigmaStep": "1"},
                                                  date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
         elif i == 3:
             twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
-                                                 carFollowingModel=carFollowingModel,
+                                                 carFollowingModel="Krauss",
                                                  macroModelType=macroModelType, tau="1.5",
                                                  parameters={"sigma": "0.5", "sigmaStep": "2"},
                                                  date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
         elif i == 4:
             twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
-                                                 carFollowingModel=carFollowingModel,
+                                                 carFollowingModel="Krauss",
                                                  macroModelType=macroModelType, tau="1.5",
                                                  parameters={"sigma": "1", "sigmaStep": "5"},
                                                  date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
         elif i == 5:
             twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
-                                                 carFollowingModel=carFollowingModel,
+                                                 carFollowingModel="Krauss",
                                                  macroModelType=macroModelType, tau="1.5",
                                                  parameters={"sigma": "0", "sigmaStep": "1"},
                                                  date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
-
-
+        elif i == 6:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, carFollowingModel="IDM",
+                                             macroModelType=macroModelType, tau="1", parameters={"delta": "4", "stepping": "0.25"},
+                                             date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 7:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="IDM",
+                                                 macroModelType=macroModelType, tau="1",
+                                                 parameters={"delta": "2", "stepping": "1"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 8:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="IDM",
+                                                 macroModelType=macroModelType, tau="1",
+                                                 parameters={"delta": "6", "stepping": "0.1"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 9:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, carFollowingModel="IDM",
+                                             macroModelType=macroModelType, tau="1.5", parameters={"delta": "4", "stepping": "0.25"},
+                                             date=simulationDate, timeslot=[0,24], edge_id=edge_id)
+        elif i == 10:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="IDM",
+                                                 macroModelType=macroModelType, tau="1.5",
+                                                 parameters={"delta": "2", "stepping": "1"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 11:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="IDM",
+                                                 macroModelType=macroModelType, tau="1.5",
+                                                 parameters={"delta": "6", "stepping": "0.1"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 12:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, carFollowingModel="W99",
+                                             macroModelType=macroModelType, tau="1", parameters={"cc1": "1.3", "cc2": "8"},
+                                             date=simulationDate, timeslot=[0,24], edge_id=edge_id)
+        elif i == 13:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="W99",
+                                                 macroModelType=macroModelType, tau="1",
+                                                 parameters={"cc1": "1.5", "cc2": "10"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 14:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="W99",
+                                                 macroModelType=macroModelType, tau="1",
+                                                 parameters={"cc1": "1", "cc2": "4"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 15:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, carFollowingModel="W99",
+                                             macroModelType=macroModelType, tau="1.5", parameters={"cc1": "1.3", "cc2": "8"},
+                                             date=simulationDate, timeslot=[0,24], edge_id=edge_id)
+        elif i == 16:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="W99",
+                                                 macroModelType=macroModelType, tau="1.5",
+                                                 parameters={"cc1": "1.5", "cc2": "10"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)
+        elif i == 17:
+            twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                                 carFollowingModel="W99",
+                                                 macroModelType=macroModelType, tau="1.5",
+                                                 parameters={"cc1": "1", "cc2": "4"},
+                                                 date=simulationDate, timeslot=[0, 24], edge_id=edge_id)

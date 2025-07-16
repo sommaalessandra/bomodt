@@ -1,6 +1,6 @@
 <configuration>
-    <route-files value="C:\Users\manfr\PycharmProjects\TrafficModelingTool\sumoenv\standalone\sampleRoutes.rou.xml"/>
-    <edgedata-files value="C:\Users\manfr\PycharmProjects\TrafficModelingTool\sumoenv\standalone\edgedata.xml"/>
+    <route-files value="C:\Users\manfr\PycharmProjects\IntelliFlowTwin\sumoenv\standalone\sampleRoutes.rou.xml"/>
+    <edgedata-files value="C:\Users\manfr\PycharmProjects\IntelliFlowTwin\sumoenv\routes\07-00-08-00\edgedata.xml"/>
     <edgedata-attribute value="qPKW"/>
     <output-file value="C:\Users\manfr\PycharmProjects\TrafficModelingTool\sumoenv\standalone\generatedRoutes.rou.xml"/>
     <attributes value="type='customModel'"/>

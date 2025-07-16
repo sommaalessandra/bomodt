@@ -180,12 +180,14 @@ class TrafficModeler:
                 for interval in root.findall('interval'):
                     found = False
                     for edge in interval.findall('edge'):
-                        if edge.get('id') == edge_id:  # Controlla se l'id corrisponde alla lane+
+                        if edge.get('id') == edge_id:  # Controlla se l'id corrisponde alla lane
                             found = True
                             detected_lane_density = edge.get('laneDensity')
-                            detected_speed = edge.get('speed')
-                            detected_flow = int(edge.get('entered')) / 3600
-                            detected_density = detected_flow / float(detected_speed)
+                            detected_speed = float(edge.get('speed')) * 3.6
+                            # detected_flow = int(edge.get('entered')) / 3600
+                            # detected_density = detected_flow / float(detected_speed)
+                            detected_density = float(edge.get('density'))
+                            detected_flow = detected_speed * detected_density
                             detected_count = int(edge.get('entered'))
                             model_df = pd.read_csv(folder_path+"/model.csv", sep=';', decimal=',')
                             real_density = model_df[model_df['edge_id'] == edge_id]["density"].values[0]
@@ -262,7 +264,7 @@ class TrafficModeler:
             speed_pred = float(row["detected_speed"])
             density_true = float(row["real_density"])
             density_pred = float(row["detected_density"])
-            flow_true = float(row["real_flow"])
+            flow_true = float(row["real_count"])
             flow_pred = float(row["detected_flow"])
             if speed_pred != 0 and speed_true != 0:
                 speed_squared_errors += (speed_pred - speed_true) ** 2
@@ -665,30 +667,43 @@ class TrafficModeler:
         # plt.tight_layout()
         # plt.show()
 
-    def plotTemporalResultsAverage(self, folderPath: str, showImage=True):
+    def plotTemporalResultsAverage(self, folderPath: str, timeSlotRange: list[int], showImage=True):
+        import os
+        import pandas as pd
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from scipy.interpolate import UnivariateSpline
         def timeslot_to_numeric(timeslot):
             start_hour, start_min, end_hour, end_min = map(int, timeslot.split('-'))
             start_seconds = start_hour * 3600 + start_min * 60
             end_seconds = end_hour * 3600 + end_min * 60
             return (start_seconds + end_seconds) / 2
 
-        # Lista di DataFrame letti
+        def is_timeslot_in_range(timeslot, start_hour, end_hour):
+            start_h = int(timeslot.split('-')[0])
+            return start_hour <= start_h < end_hour
+
+        start_hour, end_hour = timeSlotRange
         data_frames = []
+        if timeSlotRange[1] - timeSlotRange[0] < 3:
+            print("It is not possible to plot temporal results having only one timeslot!")
+            return
         for filename in os.listdir(folderPath):
             if filename.endswith(".csv"):
                 df = pd.read_csv(os.path.join(folderPath, filename), delimiter=';')
-                df['timeslot_numeric'] = df['timeslot'].apply(timeslot_to_numeric)
-                data_frames.append(df)
+                df = df[df['timeslot'].apply(lambda ts: is_timeslot_in_range(ts, start_hour, end_hour))]
+                if not df.empty:
+                    df['timeslot_numeric'] = df['timeslot'].apply(timeslot_to_numeric)
+                    data_frames.append(df)
 
         if not data_frames:
-            print("No CSV files found in the directory.")
+            print("No matching timeslots found in any CSV files.")
             return
 
-        # Concatenazione e media per timeslot
         combined = pd.concat(data_frames)
         grouped = combined.groupby('timeslot_numeric').agg({
             'detected_flow': 'mean',
-            'real_flow': 'mean',
+            'real_count': 'mean',
             'detected_speed': 'mean',
             'real_speed': 'mean',
             'detected_density': 'mean',
@@ -708,12 +723,13 @@ class TrafficModeler:
         # Plot
         fig, axes = plt.subplots(1, 3, figsize=(21, 6))
         fig.legend(loc="upper left")
-        plt.title(f"Modello {self.carFollowingModelType.capitalize()}: Speed and Flow over Time")
+        plt.title(
+            f"Modello {self.carFollowingModelType.capitalize()}: Speed and Flow from {start_hour}:00 to {end_hour}:00")
 
         axes[0].scatter(grouped['timeslot_numeric'], grouped['detected_flow'], label="Detected Flow", color="blue",
                         alpha=0.7)
         axes[0].plot(x_smooth, y_smooth1, color='blue', linestyle='-', label='Detected Curve')
-        axes[0].scatter(grouped['timeslot_numeric'], grouped['real_flow'], label="Real Flow", color="red", alpha=0.7)
+        axes[0].scatter(grouped['timeslot_numeric'], grouped['real_count'], label="Real Flow", color="red", alpha=0.7)
         axes[0].set_xlabel("Time")
         axes[0].set_ylabel("Flow (vehicles/h)")
         axes[0].legend(loc="upper left")
@@ -724,7 +740,7 @@ class TrafficModeler:
         axes[1].scatter(grouped['timeslot_numeric'], grouped['real_speed'], label="Real Speed", color="red", alpha=0.7)
         axes[1].plot(x_smooth, y_smooth2, color='blue', linestyle='-', label='Detected Curve')
         axes[1].set_xlabel("Time")
-        axes[1].set_ylabel("Speed (m/s)")
+        axes[1].set_ylabel("Speed (km/h)")
 
         axes[2].scatter(grouped['timeslot_numeric'], grouped['detected_density'], label="Detected Density",
                         color="blue", alpha=0.7)
@@ -735,9 +751,7 @@ class TrafficModeler:
         axes[2].set_ylabel("Density (vehicle/m)")
 
         plt.tight_layout()
-        path = Path(folderPath)
-        saving_folder = path.parent.absolute()
-        plt.savefig(os.path.join(saving_folder, 'plotResults.png'))
+        plt.savefig(os.path.join(folderPath, 'plotResults.png'))
         if showImage:
             plt.show()
     def compareResults(self, resultPath: str, y_axis = "flow"):

@@ -4,14 +4,14 @@
 
     <input>
         <net-file value="../static/full.net.xml"/>
-        <route-files value="cfmodel_generatedRoutes.rou.xml"/>
-        <additional-files value="../static/detectors.add.xml, optimized_tls.add.xml, vtype.add.xml"/>
+        <route-files value="generatedRoutes.rou.xml"/>
+        <additional-files value="../static/detectors.add.xml, vtype.add.xml"/>
     </input>
 
     <output>
         <tripinfo-output value="../output/tripinfos.xml"/>
         <save-state.prefix value="state"/>
-		<!--<fcd-output value="/output/fcd.xml"/> -->
+		<fcd-output value="../output/fcd.xml"/>
 		<vehroute-output value="../output/vehroute.xml" />
 		<summary-output value="../output/summary.xml" />
 		<queue-output value="../output/queue.xml" />

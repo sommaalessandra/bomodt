@@ -139,10 +139,10 @@ class ScenarioGenerator:
 
     def generateRandomRoute(self, sumoNetPath: str, timeSlot: str):
         """
-
+        the function generates a set of routes for the map that can be used during the sampling phase
         Args:
-            sumoNetPath:
-            timeSlot:
+            :param sumoNetPath:
+            :param timeSlot: the timeslot of the simulation. It is used as a folder name.
 
         Returns:
 
@@ -154,8 +154,8 @@ class ScenarioGenerator:
         folder_path = os.path.join("sumoenv/routes", folder_name)
         os.makedirs(folder_path, exist_ok=True)
         script = SUMO_TOOLS_PATH + "/randomTrips.py"
-        subprocess.run(['python', script, "-n", sumoNetPath, "-r", folder_path + "/generatedRoutes.rou.xml",
-                        "--output-trip-file", folder_path + "/randomTrips.rou.xml",
+        subprocess.run(['python', script, "-n", sumoNetPath, "-r", folder_path + "/randomTrips.rou.xml",
+                        "--output-trip-file", folder_path + "/trips.rou.xml",
                         "--trip-attributes", "type='customModel'",
                         "--random-departpos", "--random-arrivalpos",
                         "--allow-fringe", "--random",
@@ -193,7 +193,7 @@ class ScenarioGenerator:
                                   folder_path + "/generatedRoutes.rou.xml", "--edgedata-attribute", "qPKW",
                                   "--write-flows", "number", "--attributes", type,
                                   "--total-count", "10000", "--optimize", "full", "--minimize-vehicles", "1",
-                                  "--threads", "8"],
+                                  "--threads", "8", "--verbose"],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True,
                                  env=os.environ.copy(), bufsize=1)
 

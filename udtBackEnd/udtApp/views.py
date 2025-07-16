@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 from django.core.paginator import Paginator
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
@@ -191,6 +191,7 @@ def simulationModeler(request):
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
                                                   date=params['date'], timeslot=time_slot, edge_id='23288872#4')
+                print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'IDM':
                 additional_param = {'delta': str(data['delta']),
                                     'stepping': str(data['stepping'])}
@@ -200,6 +201,7 @@ def simulationModeler(request):
                                                   parameters=additional_param,
                                                   date=params['date'], timeslot=time_slot,
                                                   edge_id='23288872#4')
+                print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'W99':
 
                 additional_param = {'cc1': str(data['cc1']),
@@ -211,10 +213,18 @@ def simulationModeler(request):
                                                   date=params['date'], timeslot=time_slot,
                                                   edge_id='23288872#4')
                 print("Executed simulation " + str(folderResult))
+            params.update(additional_param)
+            # Saving Model parameter data into the output folder
+            params_file = os.path.join(folderResult, 'params.json')
+            with open(params_file, 'w') as f:
+                json.dump(params, f, indent=4)
             messages.success(request, "Simulation Completed!")
             folderResult = os.path.basename(os.path.normpath(folderResult))
             print(str(folderResult))
-            return serveResults(request, folderResult)
+
+            # folderResultPath = os.path.join(SUMO_PATH, 'standalone', folderResult)
+            # os.makedirs(folderResultPath, exist_ok=True)
+
             # return render(request, 'udtApp/result.html', {'result': context})
     else:
         form = ConfigForm()
@@ -263,6 +273,114 @@ def serveResults(request, folder_name):
     project_root = current_path.parent
     base_dir = project_root / 'sumoenv'
     folder_path = os.path.join(base_dir, folder_name)
+
+
+
+    # Controlla che la cartella esista e rispetti il pattern
+    if os.path.exists(folder_path):
+
+        params_path = os.path.join(folder_path, 'params.json')
+        # Check if param.json file exists
+        if not os.path.exists(params_path):
+            return JsonResponse({'error': 'params.json not found'}, status=404)
+        # parameters reading
+        with open(params_path, 'r') as f:
+            calibration_params = json.load(f)
+
+        stats_file = os.path.join(folder_path, "mean_tripinfo_metrics.json")
+        try:
+            with open(stats_file, 'r') as f:
+                stats_result = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            stats_result = {}  # fallback se il file non esiste o è corrotto
+        csv_file = os.path.join(folder_path, "mean_errors.csv")
+        # Leggi il file con separatore ;
+        df = pd.read_csv(csv_file, sep=';')
+
+        # Seleziona solo le colonne di interesse (se esistono)
+        columns_to_keep = ['speed_nrmse', 'density_nrmse', 'flow_rmse', 'flow_geh']
+        filtered_df = df[columns_to_keep]
+        # Converto in lista di dizionari per il template
+        if not filtered_df.empty:
+            evaluation_results = filtered_df.iloc[0].to_dict()
+        else:
+            evaluation_results = {}
+
+        # TODO
+        # Placeholder path for the image
+        result_image_url = '/static/img/mock_plot1.png'  # assicurati di avere questa immagine nella cartella static
+
+        # URL della dashboard grafana (modifica con la tua se necessario)
+        grafana_url = "http://localhost:3000/goto/Yj8smlsHk?orgId=1"
+
+        context = {
+            'calibration': calibration_params,
+            'stats': stats_result,
+            'results': evaluation_results,
+            'result_image_url': result_image_url,
+            'grafana_url': grafana_url,
+            'nbar': 'summary',
+        }
+        return render(request, 'udtApp/summary.html', context)
+            # return render(request, "view_folder.html", {"folder_name": folder_name, "files": files})
+    else:
+        return render(request, "error.html", {"message": "Folder not found or access not allowed."})
+
+def mocksummary(request):
+    # Mock dei parametri
+    calibration_params = {
+        'macromodel': 'Greenshields',
+        'car_following_model': 'Krauss',
+        'tau': 1.0,
+        'sigma': 0.5,
+        'sigma_step': 2,
+        'time_slot': ['15:00', '16:00'],
+        'date': '2024-02-01'
+    }
+
+    # Mock dei risultati quantitativi
+    evaluation_results = {
+        'speed_nrmse': 20.35,
+        'density_nrmse': 3.71,
+        'flow_nrmse': 0.5,
+        'flow_geh': 3.20
+    }
+
+    # Path placeholder per l'immagine
+    result_image_url = '/static/img/mock_plot1.png'  # assicurati di avere questa immagine nella cartella static
+
+    # URL della dashboard grafana (modifica con la tua se necessario)
+    grafana_url = "http://localhost:3000/d/abc123/grafana-dashboard?orgId=1"
+
+    context = {
+        'calibration': calibration_params,
+        'results': evaluation_results,
+        'result_image_url': result_image_url,
+        'grafana_url': grafana_url,
+        'nbar': 'summary',
+    }
+
+    return render(request, 'udtApp/summary.html', context)
+
+
+def backup_serveResults(request, folder_name):
+    FOLDER_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}_(.+)$")  # Nota il $ alla fine
+    # folder_path = os.path.join(settings.MEDIA_ROOT, "your_directory", folder_name)
+    current_dir = os.path.abspath(os.getcwd())
+    current_path = Path(current_dir).resolve()
+    project_root = current_path.parent
+    base_dir = project_root / 'sumoenv'
+    folder_path = os.path.join(base_dir, folder_name)
+    params_path = os.path.join(folder_path, 'params.json')
+
+    # Controlla che il file esista
+    if not os.path.exists(params_path):
+        return JsonResponse({'error': 'params.json not found'}, status=404)
+
+    # Lettura dei parametri
+    with open(params_path, 'r') as f:
+        params = json.load(f)
+
     # Controlla che la cartella esista e rispetti il pattern
     if os.path.exists(folder_path):
         files = os.listdir(folder_path)
@@ -291,3 +409,4 @@ def serveResults(request, folder_name):
             # return render(request, "view_folder.html", {"folder_name": folder_name, "files": files})
     else:
         return render(request, "error.html", {"message": "Folder not found or access not allowed."})
+

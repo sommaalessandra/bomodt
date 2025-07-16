@@ -18,4 +18,5 @@ urlpatterns = [
     path("simulationResults", views.simulationResults, name='simulationResults'),
     path("simulationResults/<str:folder_name>/", views.serveResults, name='serveResults'),
     path("image/<str:folder_name>/", views.serve_image, name="serve_image"),
+    path('summary', views.mocksummary, name='summary'),
 ]

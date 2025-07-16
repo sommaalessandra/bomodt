@@ -1,4 +1,6 @@
 import sys
+import time
+
 import pandas as pd
 from libraries.classes.SumoSimulator import Simulator
 from libraries.classes.Planner import Planner
@@ -13,7 +15,7 @@ import pytz
 from datetime import datetime
 from libraries.classes.TrafficModeler import TrafficModeler
 from libraries.constants import SUMO_PATH, SUMO_NET_PATH, projectPath
-
+from libraries.utils import statisticUtils
 
 class DigitalTwinManager:
     """
@@ -140,6 +142,7 @@ class DigitalTwinManager:
             print(route_folder_path)
             self.sumoSimulator.changeRouteFilePath(route_folder_path)
             self.sumoSimulator.start(activeGui=False, logFilePath=self.sumoSimulator.logFile)
+            # time.sleep(10)
 
         # confPath = projectPath + "/" + confPath
         paramvalues = list(parameters.values())
@@ -158,7 +161,10 @@ class DigitalTwinManager:
                                                    + "_ap" + str(paramvalues[1]) + ".csv",
                                     outputFilePath=confPath + "/error_output/" + str(edge_id[0]) + "_error_summary_t"+ str(tau)
                                                    + "_ap" + str(paramvalues[0]) + "_ap" + str(paramvalues[1]) + ".csv")
-        basemodel.plotTemporalResultsAverage(folderPath=confPath + "/detected_output", showImage=True)
+        # basemodel.plotTemporalResultsAverage(folderPath=confPath + "/detected_output", timeSlotRange=timeslot ,showImage=True)
+
+        statisticUtils.evaluateSimulationError(confPath)
+        statisticUtils.compute_mean_tripinfo_metrics(confPath)
         return confPath
 
     def generateGraphs(self, scenarioFolder: str):

@@ -1,0 +1,15 @@
+<configuration>
+    <net-file value="C:\Users\manfr\PycharmProjects\IntelliFlowTwin\sumoenv\static\full.net.xml"/>
+    <output-trip-file value="C:\Users\manfr\PycharmProjects\IntelliFlowTwin\sumoenv\standalone\trips.rou.xml"/>
+    <route-file value="C:\Users\manfr\PycharmProjects\IntelliFlowTwin\sumoenv\standalone\sampleRoutes.rou.xml"/>
+    <random-departpos value="True"/>
+    <random-arrivalpos value="True"/>
+    <fringe-factor value="10.0"/>
+    <allow-fringe value="True"/>
+    <random value="True"/>
+    <min-distance value="100.0"/>
+    <max-distance value="2000.0"/>
+    <remove-loops value="True"/>
+    <random-routing-factor value="10.0"/>
+    <period value="0.1"/>
+</configuration>
