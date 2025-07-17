@@ -397,7 +397,7 @@ def generateRealFlow(inputFile: str):
         '05:00-06:00', '06:00-07:00', '07:00-08:00', '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00',
         '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00',
         '19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-24:00', 'Nome via', 'direzione',
-        'longitudine', 'latitudine', 'geopoint', 'ID_univoco_stazione_spira'
+        'longitudine', 'latitudine', 'geopoint', 'ID_univoco_stazione_spira', 'codZone'
     ]
     df = df[columns_to_keep]
 
@@ -544,7 +544,9 @@ def fillMissingDirections(inputFilePath: str, directionColumn = "direzione", def
     # Save modified dataset
     df.to_csv(inputFilePath, index=False, sep=';')
 
-def addZones(inputFilePath: str, zoneFilePath: str, zoneColumn="codZone", zoneColumnID="Codice Area Statistica", withPlot=False):
+
+#Use 'Codice Area Statistica'as zoneColumnID for statistical areas
+def addZones(inputFilePath: str, zoneFilePath: str, zoneColumn="codZone", zoneColumnID="COD_ZONA", withPlot=False):
     """
     Add Zone information to the input file entries. Each geopoint in the input data is evaluated as a point and searched
     for which geoshape (of the zone file) contains that point. Once found, the associated zone id information is added

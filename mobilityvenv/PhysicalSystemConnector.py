@@ -141,8 +141,9 @@ class PhysicalSystemConnector:
     """
     partialIdentifier: str
     name: str
+    taz: str
 
-    def __init__(self, psc_partial_id: str, psc_name_id: str):
+    def __init__(self, psc_partial_id: str, psc_name_id: str, taz: str):
         """
         Initialize a new instance of the PhysicalSystemConnector class.
 
@@ -152,6 +153,7 @@ class PhysicalSystemConnector:
         self.partialIdentifier = psc_partial_id
         self.name = psc_name_id
         self._sensors = []
+        self.taz = taz
 
     def help(self, method_names=None):
         """
@@ -268,7 +270,7 @@ class PhysicalSystemConnector:
 
         os.makedirs(folder, exist_ok=True)
         csv_filename = os.path.join(folder, f"{self.name}.csv")
-        field_names = ["pcs_id", "num_connected_devices", "device_id", "device_key"] # num_connected_devices is not so useful in this case, could remove it later
+        field_names = ["pcs_id", "num_connected_devices", "device_id", "device_key", "taz"] # num_connected_devices is not so useful in this case, could remove it later
         num_connected_devices = self.numberConnectedDevice()
         # if the file already exists --> check the data
         if os.path.exists(csv_filename):
@@ -302,7 +304,8 @@ class PhysicalSystemConnector:
                             existing_data.at[index, field_names[3]] = str(device.apiKey)
                 if not found_device:
                     new_row = {field_names[0]: self.name_identifier, field_names[1]: num_connected_devices,
-                               field_names[2]: device.devicePartialID, field_names[3]: device.apiKey}
+                               field_names[2]: device.devicePartialID, field_names[3]: device.apiKey,
+                               field_names[4]: self.taz}
                     existing_data = pd.concat([existing_data, pd.DataFrame([new_row])], ignore_index=True)
             existing_data.to_csv(csv_filename, index=False)
         else:
@@ -310,7 +313,8 @@ class PhysicalSystemConnector:
                 field_names[0]: self.name,
                 field_names[1]: num_connected_devices,
                 field_names[2]: device.devicePartialID,
-                field_names[3]: device.apiKey
+                field_names[3]: device.apiKey,
+                field_names[4]: self.taz
             } for device in self._sensors]
             df = pd.DataFrame(data, columns=field_names)
             df.to_csv(csv_filename, index=False)

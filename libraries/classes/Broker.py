@@ -182,7 +182,7 @@ class Broker:
             self.entitiesList.append((entityType, newNumber))
 
     def updateContext(self, deviceID:str, date: str, timeSlot: str, trafficFlow: int, coordinates: List[float], laneDirection: str,
-                      cbConnection: Optional[Client]) -> bool:
+                      taz: str, cbConnection: Optional[Client]) -> bool:
         """
         Update the existing Context entities based on data received from physical devices through the IoT Agent.
 
@@ -204,7 +204,7 @@ class Broker:
         try:
             if self.shadowManagerReference is None:
                 self.shadowManagerReference = DigitalShadowManager()
-            roadShadow = self.shadowManagerReference.searchShadow(shadowType="road", timeSlot=timeSlot, trafficFlow=trafficFlow, coordinates=coordinates, laneDirection=laneDirection, deviceID=deviceID)
+            roadShadow = self.shadowManagerReference.searchShadow(shadowType="road", timeSlot=timeSlot, trafficFlow=trafficFlow, coordinates=coordinates, laneDirection=laneDirection, taz=taz, deviceID=deviceID)
             if not roadShadow:
                 raise RoadEntityError(f"No Road Shadow found for coordinates {coordinates} and direction {laneDirection}", coordinates=coordinates, laneDirection=laneDirection)
             roadName = roadShadow.name
@@ -240,7 +240,7 @@ class Broker:
                 else:
                     rsNumber=self.getProgressiveNumber("RoadSegment") + 1
                     tfoNumber=self.getProgressiveNumber("TrafficFlowObserved") + 1
-                    entityRoadSegment=self.createRoadSegmentEntity(progressiveNumber=rsNumber,startPoint=startPoint, endPoint=endPoint,coordinates=coordinates,direction=laneDirection, edgeID=edgeID, trafficFlow=trafficFlow, date=completeDate,trafficLoopID=deviceURN, timeslot=timeSlot)
+                    entityRoadSegment=self.createRoadSegmentEntity(progressiveNumber=rsNumber,startPoint=startPoint, endPoint=endPoint,coordinates=coordinates,direction=laneDirection, taz= taz, edgeID=edgeID, trafficFlow=trafficFlow, date=completeDate,trafficLoopID=deviceURN, timeslot=timeSlot)
                     entityTrafficFlowObs=self.createTrafficFlowObsEntity(progressiveNumber=tfoNumber, direction=laneDirection, date=completeDate, trafficFlow=trafficFlow,trafficLoopID=deviceURN, roadSegmentID=entityRoadSegment.id, timeslot=timeSlot)
                     entityRoadSegment=self.updateRoadSegmentRelation(rsEntity=entityRoadSegment, roadID=entityRoad.id,traffiFlowObsID=entityTrafficFlowObs.id)
                     entityRoad=self.updateRoadRelation(rEntity=entityRoad, roadSegmentID=entityRoadSegment.id)
@@ -259,7 +259,7 @@ class Broker:
                 rsNumber = self.getProgressiveNumber("RoadSegment") + 1
                 tfoNumber = self.getProgressiveNumber("TrafficFlowObserved") + 1
                 entityRoad=self.createRoadEntity(progressiveNumber=rNumber, roadName=roadName)
-                entityRoadSegment = self.createRoadSegmentEntity(progressiveNumber=rsNumber, startPoint=startPoint,  endPoint=endPoint, coordinates=coordinates, direction=laneDirection, edgeID=edgeID,trafficFlow=trafficFlow, date=completeDate, trafficLoopID=deviceURN, timeslot=timeSlot)
+                entityRoadSegment = self.createRoadSegmentEntity(progressiveNumber=rsNumber, startPoint=startPoint,  endPoint=endPoint, coordinates=coordinates, direction=laneDirection, taz=taz, edgeID=edgeID, trafficFlow=trafficFlow, date=completeDate, trafficLoopID=deviceURN, timeslot=timeSlot)
                 entityTrafficFlowObs = self.createTrafficFlowObsEntity(progressiveNumber=tfoNumber, direction=laneDirection, date=completeDate, trafficFlow=trafficFlow,trafficLoopID=deviceURN, roadSegmentID=entityRoadSegment.id, timeslot=timeSlot)
                 entityRoadSegment = self.updateRoadSegmentRelation(rsEntity=entityRoadSegment, roadID=entityRoad.id,traffiFlowObsID=entityTrafficFlowObs.id)
                 entityRoad = self.updateRoadRelation(rEntity=entityRoad, roadSegmentID=entityRoadSegment.id)
@@ -274,7 +274,7 @@ class Broker:
             return False
 
     def createRoadSegmentEntity(self, progressiveNumber: int, startPoint: int, endPoint: int, coordinates: List[float], direction: str,
-                                edgeID: str, trafficFlow: int, date: str, trafficLoopID: str, timeslot: str) -> Entity:
+                               taz:str, edgeID: str, trafficFlow: int, date: str, trafficLoopID: str, timeslot: str) -> Entity:
 
         roadSegmentID = 'RS{:03d}'.format(progressiveNumber)
         roadSegment = Entity("RoadSegment", roadSegmentID, ctx=TRANSPORTATION_DATA_MODEL_CTX)
@@ -289,6 +289,7 @@ class Broker:
             raise ValueError("Coordinates must contain exactly two values: latitude and longitude.")
 
         roadSegment.prop('direction', direction)
+        roadSegment.prop('taz', taz)
         roadSegment.prop('edgeID', edgeID)
         roadSegment.prop('trafficFlow', trafficFlow).rel(Rel.OBSERVED_BY, trafficLoopID, nested=True)
         roadSegment.tprop('DateTime', date)

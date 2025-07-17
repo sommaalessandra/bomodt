@@ -33,7 +33,7 @@ import datetime
 
 selectedTimeSlot = "00:00-01:00"
 tempTimeSlot = str(datetime.time(0).strftime("%H:00"))+'-'+str(datetime.time(1).strftime("%H:00"))
-tlColumnsNames = ["index", "road_name", "direction", "geopoint", "ID_loop"]
+tlColumnsNames = ["index", "road_name", "direction", "geopoint", "ID_loop", "taz"]
 
 
 def setupPhysicalSystem(agentInstance: Agent) -> tuple[dict,list]:
@@ -45,7 +45,8 @@ def setupPhysicalSystem(agentInstance: Agent) -> tuple[dict,list]:
 
     [trafficData, files] = readingFiles(REAL_TRAFFIC_FLOW_DATA_MVENV_PATH)
     for i, file in enumerate(files):
-        trafficData[file] = trafficData[file][["index", "Nome via", "direzione", "geopoint","ID_univoco_stazione_spira"]]
+        trafficData[file] = trafficData[file][["index", "Nome via", "direzione", "geopoint","ID_univoco_stazione_spira",
+                                               'codZone']]
         trafficData[file].columns = tlColumnsNames
 
     # Initialization of Physical System entities (road) and attached devices (traffic loop sensors)
@@ -60,7 +61,7 @@ def setupPhysicalSystem(agentInstance: Agent) -> tuple[dict,list]:
             roadName = rows['road_name']
             if roadName not in road:
                 roadPartialIdentifier = "R{:03d}".format(naturalNumber)
-                road[roadName] = PhysicalSystemConnector(roadPartialIdentifier, roadName)
+                road[roadName] = PhysicalSystemConnector(roadPartialIdentifier, roadName, rows['taz'])
                 roadSensorIndex[roadName] = 0
                 naturalNumber += 1
             # Attaching the sensor to the road, checking if it already exists.
@@ -108,14 +109,14 @@ def startPhysicalSystem(roads: dict[int, PhysicalSystemConnector]):
 
     [trafficData, files] = readingFiles(REAL_TRAFFIC_FLOW_DATA_MVENV_PATH)
     for i, file in enumerate(files):
-        tlColumnsNames = ["index", "date", "flow", "road_name", "ID_loop", "geopoint", "direction"]
+        tlColumnsNames = ["index", "date", "flow", "road_name", "ID_loop", "geopoint", "direction", "taz"]
         for i in range(0,24):
             # the time slot column reports the number of cars that passed through a traffic loop sensor during that time frame (the traffic flow in that slot)
             if i <23:
                 tempTimeSlot = str(datetime.time(i).strftime("%H:00")) + '-' + str(datetime.time(i+1).strftime("%H:00"))
             else:
                 tempTimeSlot = "23:00-24:00"
-            tempData = trafficData[file][["index", "data", tempTimeSlot, "Nome via", "ID_univoco_stazione_spira", "geopoint", "direzione"]]
+            tempData = trafficData[file][["index", "data", tempTimeSlot, "Nome via", "ID_univoco_stazione_spira", "geopoint", "direzione", "codZone"]]
             tempData.columns = tlColumnsNames
             processingTlData(tempTimeSlot, tempData, roads)
             time.sleep(10)

@@ -122,7 +122,7 @@ class DigitalShadowManager:
                     os.remove(itemPath)
             print(f"Cleared shadow data from {SHADOWS_PATH}, preserving {SHADOW_TYPE_FILE_PATH}.")
 
-    def addShadow(self, shadowType: str, timeSlot: str, trafficFlow: int, coordinates: typing.List[float], direction: str, deviceID: str) -> Shadow:
+    def addShadow(self, shadowType: str, timeSlot: str, trafficFlow: int, coordinates: typing.List[float], direction: str, taz: str, deviceID: str) -> Shadow:
         try:
             if shadowType == "road":
                 roadName, edgeID, startPoint, endPoint = self.dataProcessor.searchRoad(coordinates=coordinates,direction=direction, deviceID=deviceID)
@@ -131,6 +131,7 @@ class DigitalShadowManager:
                     "endPoint": endPoint,
                     "coordinates": coordinates,
                     "direction": direction,
+                    "taz": taz,
                     "timeSlot": timeSlot,
                     "trafficFlow": trafficFlow,
                     "edgeID": edgeID
@@ -165,12 +166,12 @@ class DigitalShadowManager:
             raise RuntimeError(f"Failed to create shadow: {e}")
 
     def searchShadow(self, shadowType: str, timeSlot: str, trafficFlow: int, coordinates: typing.List[float],
-                     laneDirection: str, deviceID: str) -> Shadow:
+                     laneDirection: str, taz: str, deviceID: str) -> Shadow:
         if shadowType in self.shadowsByTypes and shadowType == "road":
             for shadow in self.shadowsByTypes[shadowType]:
                 if (shadow.get("coordinates") == coordinates and
                         shadow.get("direction") == laneDirection and
-                        shadow.get("trafficFlow") == trafficFlow):
+                        shadow.get("trafficFlow") == trafficFlow and shadow.get("taz")):
                     return shadow
         elif shadowType in self.shadowsByTypes and shadowType == "trafficLoop":
             for shadow in self.shadowsByTypes[shadowType]:
@@ -183,7 +184,7 @@ class DigitalShadowManager:
         try:
             if shadowType == "road":
                 newShadow = self.addShadow(shadowType, timeSlot=timeSlot, trafficFlow=trafficFlow,
-                                           coordinates=coordinates, direction=laneDirection, deviceID=deviceID)
+                                           coordinates=coordinates, direction=laneDirection, taz=taz, deviceID=deviceID)
                 return newShadow
             elif shadowType == "trafficLoop":
                 newShadow = self.addShadow(shadowType, timeSlot=timeSlot, trafficFlow=trafficFlow,

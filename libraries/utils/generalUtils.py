@@ -81,6 +81,7 @@ def processingTlData(timeSlot, trafficData, roads: dict):
         direction = str(row["direction"])
         roadName = row['road_name']
         date = row['date']
+        taz = row['taz']
 
         if roadName in roads:
             trafficLoopIdentifier= "TL{}".format(str(row["ID_loop"]))
@@ -102,7 +103,7 @@ def processingTlData(timeSlot, trafficData, roads: dict):
                 # print("Traffic Loop Position: [" + str(longitude) + ", " + str(latitude) + "]")
                 # print("Road: " + str(roadName))
 
-                trafficLoopSensor.sendData(date, timeSlot, trafficFlow, coordinates, direction,
+                trafficLoopSensor.sendData(date, timeSlot, trafficFlow, coordinates, direction, taz,
                                            device_id=trafficLoopSensor.devicePartialID,
                                            device_key=trafficLoopSensor.apiKey)
                 # end_time = time.time_ns()

@@ -160,10 +160,11 @@ class Agent:
         flow = data[0][2]
         coordinates = data[0][3]
         direction = data[0][4]
-        self.measurementSending(date, timeSlot, flow, coordinates, direction, measure_type="trafficFlow", device_key=device_key,
+        taz = data[0][5]
+        self.measurementSending(date, timeSlot, flow, coordinates, direction, taz, measure_type="trafficFlow", device_key=device_key,
                                 device_id=device_id)
 
-    def measurementSending(self, date: str, timeSlot: str, flow: int, coordinates, direction: str, measure_type: str, device_key, device_id):
+    def measurementSending(self, date: str, timeSlot: str, flow: int, coordinates, direction: str, taz: str, measure_type: str, device_key, device_id):
         """
         Send a traffic flow measurement to the IoT Agent and update the Context Broker.
 
@@ -196,6 +197,7 @@ class Agent:
                     "type": "Point",
                     "coordinates": coordinates
                 },
+                "taz": taz,
                 "timeSlot": timeSlot,
                 "laneDirection": direction,
                 "dateObserved": date
@@ -219,7 +221,7 @@ class Agent:
                 print("Updating Context Broker entities linked to device: " + str(device_id) + "...")
                 # time.sleep(3)
                 cbResponse = self.cbReference.updateContext(deviceID=device_id, date=date, timeSlot=timeSlot, trafficFlow=flow,
-                                                  coordinates=coordinates,laneDirection=direction, cbConnection=self.cbConnection)
+                                                  coordinates=coordinates,laneDirection=direction, taz=taz, cbConnection=self.cbConnection)
                 if cbResponse is True:
                     return True
                 else:

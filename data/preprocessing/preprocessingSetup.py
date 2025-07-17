@@ -13,7 +13,7 @@ def run():
     filterWithAccuracy(TRAFFIC_FLOW_OPENDATA_FILE_PATH, ACCURACY_TRAFFIC_LOOP_OPENDATA_FILE_PATH, date_column='data',sensor_id_column='codice_spira', output_file=TRAFFIC_FLOW_ACCURATE_FILE_PATH, accepted_percentage=acceptedAccuracy)
 
     #3. Adding Zone ID for each measurement inside the input file.
-    # addZones(inputFilePath=TRAFFIC_FLOW_ACCURATE_FILE_PATH, zoneFilePath=STATISTICAL_AREAS_OPENDATA_FILE_PATH)
+    addZones(inputFilePath=TRAFFIC_FLOW_ACCURATE_FILE_PATH, zoneFilePath=STATISTICAL_AREAS_OPENDATA_FILE_PATH)
 
     #4. Filtering the dataset in a specific TIME WINDOW for testing purposes, and reordering the dataset in a chronological order.
     ##### Note: comment the following two code lines for working on the entire dataset.
