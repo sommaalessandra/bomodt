@@ -1,6 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
+from pyproj import Transformer
 from shapely.wkt import loads as load_wkt
 from shapely.geometry import Point, shape, Polygon, mapping
 from scipy.spatial import cKDTree
@@ -13,7 +14,8 @@ from datetime import datetime
 from libraries.constants import *
 import sumolib
 import os
-
+import json
+from xml.dom import minidom
 
 
 def filterWithAccuracy(file_input: str, file_accuracy: str,date_column: str,sensor_id_column: str, output_file: str,  accepted_percentage: int):
@@ -717,3 +719,63 @@ def generateEdgeFromFlow(inputFlowPath: str, detectorFilePath: str, outputEdgePa
     subprocess.run([sys.executable, script, "--detector-file", detector,
                     "--detector-flow-file", flow, "--output-file", output, "--flow-columns", "qPKW", "-i", '61'])
 
+
+def exportZonesToSUMO(zoneFilePath: str, sumoNetFile: str, outputXmlPath: str,
+                                    zoneColumnID="COD_ZONA", geoShapeColumn="Geo Shape"):
+    """
+    Converts zones from a CSV with GeoJSON-like polygon shapes to a SUMO-compatible .add.xml file using SUMO's own
+    coordinate conversion.
+
+    Args:
+        zoneFilePath: Path to the CSV file with polygon shapes and zone IDs.
+        sumoNetFile: Path to the SUMO .net.xml file.
+        outputXmlPath: Path to save the output .add.xml file.
+        zoneColumnID: Name of the column in the CSV with the zone ID.
+        geoShapeColumn: Name of the column in the CSV with the GeoJSON-like polygon.
+    """
+    print("Reading SUMO network...")
+    net = sumolib.net.readNet(sumoNetFile)
+
+    print("Reading zones CSV...")
+    df = pd.read_csv(zoneFilePath, sep=';')
+
+    def parse_custom_geo_shape(geo_shape_str):
+        geo_data = eval(geo_shape_str)  # GeoJSON-like dict
+        coordinates = geo_data["coordinates"]
+        if geo_data["type"].lower() == "polygon":
+            return Polygon(coordinates[0])
+        else:
+            raise ValueError("Only 'Polygon' shapes are supported.")
+
+    # Crea GeoDataFrame
+    gdf = gpd.GeoDataFrame(
+        df,
+        geometry=df[geoShapeColumn].apply(parse_custom_geo_shape),
+        crs="EPSG:4326"
+    )
+
+    # XML root
+    root = ET.Element("additional")
+
+    for _, row in gdf.iterrows():
+        zone_id = str(row[zoneColumnID])
+        polygon = row.geometry
+
+        shape_coords = []
+        for lon, lat in polygon.exterior.coords:
+            x, y = net.convertLonLat2XY(lon, lat)
+            shape_coords.append(f"{x:.2f},{y:.2f}")
+        shape_str = " ".join(shape_coords)
+
+        taz_elem = ET.SubElement(root, "taz", id=zone_id, shape=shape_str, color="51,128,255")
+        ET.SubElement(taz_elem, "param", key="Id", value=zone_id)
+
+    # Prettify XML
+    rough_string = ET.tostring(root, encoding="unicode")
+    parsed = minidom.parseString(rough_string)
+    pretty_xml = parsed.toprettyxml(indent="  ")
+
+    with open(outputXmlPath, "w", encoding="utf-8") as f:
+        f.write(pretty_xml)
+
+    print(f"TAZ file saved at: {outputXmlPath}")

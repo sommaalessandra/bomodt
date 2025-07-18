@@ -34,6 +34,7 @@ REGISTERED_DEVICES_PATH = projectPath + "/registereddevices/"
 TRAFFIC_FLOW_OPENDATA_FILE_PATH = REAL_WORLD_DATA_PATH + "/opendata/traffic_flow_2024.csv"
 ACCURACY_TRAFFIC_LOOP_OPENDATA_FILE_PATH = REAL_WORLD_DATA_PATH + "/opendata/accuracy_traffic_loop_2024.csv"
 STATISTICAL_AREAS_OPENDATA_FILE_PATH = REAL_WORLD_DATA_PATH + "/opendata/statistical_areas.csv"
+ZONE_OPENDATA_FILE_PATH = REAL_WORLD_DATA_PATH + "/opendata/zone-del-comune-di-bologna.csv"
 
 PROCESSED_DATA_PATH = projectPath + "/data/preprocessing/generated/"
 TRAFFIC_FLOW_ACCURATE_FILE_PATH = PROCESSED_DATA_PATH + "/accurate_traffic_flow.csv"
@@ -49,6 +50,7 @@ SUMO_PATH = projectPath + "/sumoenv"
 SUMO_NET_PATH = SUMO_PATH + "/static/full.net.xml"
 SUMO_DETECTORS_ADD_FILE_PATH = SUMO_PATH + "/static/detectors.add.xml"
 SUMO_OUTPUT_PATH = SUMO_PATH + "/output"
+TAZ_ADDITIONAL_FILE_PATH = SUMO_PATH + "/static/output_taz.add.xml"
 
 
 SUMO_TOOLS_PATH = r"C:\Program Files (x86)\Eclipse\Sumo\tools"
