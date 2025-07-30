@@ -237,7 +237,7 @@ def evaluateSimulationError(folderPath: str):
         if error:
             mean_error_data.append(error)  # Salva il dizionario per media finale
 
-    # Calcola media finale e salva in mean_summary
+    # Compute final mean and save in mean_summary
     if mean_error_data:
         mean_df = pd.DataFrame(mean_error_data)
         mean_row = mean_df.mean().to_frame().T  # Media di ogni colonna
@@ -248,13 +248,17 @@ def evaluateSimulationError(folderPath: str):
     else:
         print("No error data collected to compute mean.")
 
-
-import os
-import xml.etree.ElementTree as ET
-import json
-
-
 def compute_mean_road_metrics(folderPath: str):
+    '''
+    Explores all the simulation folders present in folderPath and retrieves the edge data output.
+    Calculates the average relative to the values of travel time, waiting time, loss time, and speed for each road and
+    then averages it for each simulation present
+    Args:
+        folderPath: path in which simulation folders are stored
+
+    Returns:
+        a json file containing the averaged metrics
+    '''
     metrics_to_extract = ['traveltime', 'waitingTime', 'timeLoss', 'speed']
     all_aggregated_metrics = []
 
@@ -289,7 +293,7 @@ def compute_mean_road_metrics(folderPath: str):
             all_aggregated_metrics.append(mean_metrics)
 
         except Exception as e:
-            print(f"Errore nel parsing di {output_path}: {e}")
+            print(f"Error in the parsing of {output_path}: {e}")
 
     final_means = {}
     for metric in metrics_to_extract:
@@ -312,6 +316,16 @@ import json
 
 
 def compute_mean_tripinfo_metrics(base_folder):
+    '''
+    Explores all the simulation folders present in folderPath and retrieves the trip info output.
+    Calculates the average relative to the values of duration, waiting time, loss time, and route length for each trip
+    (i.e., each car) and then averages it for each simulation present .
+    Args:
+        folderPath: path in which simulation folders are stored
+
+    Returns:
+        a json file containing the averaged metrics
+    '''
     metrics_to_extract = ['duration', 'waitingTime', 'timeLoss', 'routeLength']
     all_metrics = []
 
@@ -359,9 +373,9 @@ def compute_mean_tripinfo_metrics(base_folder):
             all_metrics.append(mean_metrics)
 
         except Exception as e:
-            print(f"Errore nel parsing di {file_path}: {e}")
+            print(f"Error in the parsing of {file_path}: {e}")
 
-    # Media finale su tutte le cartelle
+    # Final average over all folders
     final_result = {}
     for metric in metrics_to_extract + ['computedSpeed']:
         vals = [entry[metric] for entry in all_metrics if entry[metric] is not None]

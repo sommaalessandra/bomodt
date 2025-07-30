@@ -190,7 +190,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot, edge_id='23288872#4')
+                                                  date=params['date'], timeslot=time_slot)
                 print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'IDM':
                 additional_param = {'delta': str(data['delta']),
@@ -199,8 +199,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot,
-                                                  edge_id='23288872#4')
+                                                  date=params['date'], timeslot=time_slot)
                 print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'W99':
 
@@ -210,8 +209,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot,
-                                                  edge_id='23288872#4')
+                                                  date=params['date'], timeslot=time_slot)
                 print("Executed simulation " + str(folderResult))
             params.update(additional_param)
             # Saving Model parameter data into the output folder
@@ -274,9 +272,7 @@ def serveResults(request, folder_name):
     base_dir = project_root / 'sumoenv'
     folder_path = os.path.join(base_dir, folder_name)
 
-
-
-    # Controlla che la cartella esista e rispetti il pattern
+    # Check that the folder exists and respects the pattern
     if os.path.exists(folder_path):
 
         params_path = os.path.join(folder_path, 'params.json')
@@ -297,20 +293,30 @@ def serveResults(request, folder_name):
         # Leggi il file con separatore ;
         df = pd.read_csv(csv_file, sep=';')
 
-        # Seleziona solo le colonne di interesse (se esistono)
+        # Select only columns of interest (if any)
         columns_to_keep = ['speed_nrmse', 'density_nrmse', 'flow_rmse', 'flow_geh']
         filtered_df = df[columns_to_keep]
-        # Converto in lista di dizionari per il template
+        # I convert to a list of dictionaries for the template
         if not filtered_df.empty:
-            evaluation_results = filtered_df.iloc[0].to_dict()
+            inter_evaluation_results = filtered_df.iloc[0].to_dict()
+            evaluation_results = {}
+            for key, value in inter_evaluation_results.items():
+                try:
+                    value = value.replace(',', '.')
+                    num = float(value)
+                    rounded_num = round(num, 2)
+                    print(rounded_num)
+                    evaluation_results[key] = f"{rounded_num:.2f}"
+                except (ValueError, TypeError):
+                    evaluation_results[key] = value
         else:
             evaluation_results = {}
-
         # TODO
         # Placeholder path for the image
         result_image_url = '/static/img/mock_plot1.png'  # assicurati di avere questa immagine nella cartella static
 
-        # URL della dashboard grafana (modifica con la tua se necessario)
+        # TODO: Implement a dynamic reference for grafana dashboard
+        # Graphana dashboard URL (change if necessary)
         grafana_url = "http://localhost:3000/goto/Yj8smlsHk?orgId=1"
 
         context = {

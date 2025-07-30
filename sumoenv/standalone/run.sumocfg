@@ -5,7 +5,7 @@
     <input>
         <net-file value="../static/full.net.xml"/>
         <route-files value="${ROUTEFILEPATH}/generatedRoutes.rou.xml"/>
-        <additional-files value="${DETECTORPATH}/detectors.add.xml, ${TYPEPATH}/vtype.add.xml"/>
+        <additional-files value="${ADDPATH}/detectors.add.xml, ${ADDPATH}/output_taz.add.xml, ${TYPEPATH}/vtype.add.xml"/>
     </input>
 
 	<time> 

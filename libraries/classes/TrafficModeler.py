@@ -348,15 +348,15 @@ class TrafficModeler:
         self.simulator.changeRouteFilePath(route_path)
         os.makedirs(folder_path, exist_ok=True)
         self.simulator.changeTypePath(folder_path)
-        detector_path = os.path.join(SUMO_PATH, "static")
-        self.simulator.changeDetectorPath(detector_path)
+        static_path = os.path.join(SUMO_PATH, "static")
+        self.simulator.changeAddPath(static_path)
         # XML filename
         output_file = os.path.join(folder_path, "vtype.add.xml")
         root = ET.Element("additional")
         if modelType == "Krauss":
             self.carFollowingModelType = "Krauss"
             carFollowModel = "Krauss"
-            vtypeID = "customModel"
+            vtypeID = "customModelCar"
             if "sigma" in additionalParam:
                 print("FOUND SIGMA")
                 sigma = additionalParam["sigma"]
@@ -377,7 +377,7 @@ class TrafficModeler:
         elif modelType == "IDM":
             self.carFollowingModelType = "IDM"
             carFollowModel = "IDM"
-            vtypeID = "customModel"
+            vtypeID = "customModelCar"
             vtype = ET.SubElement(root, "vType", {
                 "id": vtypeID,
                 "carFollowModel": carFollowModel,
@@ -386,7 +386,7 @@ class TrafficModeler:
         elif modelType == "IDM":
             self.carFollowingModelType = "IDM"
             carFollowModel = "IDM"
-            vtypeID = "customModel"
+            vtypeID = "customModelCar"
             if "delta" in additionalParam:
                 delta = additionalParam["delta"]
             else:
@@ -405,7 +405,7 @@ class TrafficModeler:
         elif modelType == "W99":
             self.carFollowingModelType = "W99"
             carFollowModel = "W99"
-            vtypeID = "customModel"
+            vtypeID = "customModelCar"
             if "cc1" in additionalParam:
                  cc1 = additionalParam["cc1"]
             else:
@@ -428,6 +428,134 @@ class TrafficModeler:
         print(f"vType File created: {output_file}")
         return folder_path, conf_path
 
+
+    def vTypeDistributionGeneration(self, modelType: str, tau: str = "1", additionalParam = {},
+                                    emissionClasses = [1,2,3,4], fueltype = ['G', 'G', 'G', 'G'],
+                                    distProbability = [0.1, 0.2, 0.5, 0.2]):
+        """
+        Generates a vType distribution with a specific car-following model. Depending on the model selected, two additional
+        model-specific parameters can be set. The configured model is saved in a specific folder that shows the
+        combination of models used and the date of simulation.
+        Args:
+            :param modelType: car-following model name (can be Krauss, IDM, or W99)
+            :param tau: value of tau, that is driver's desired (minimum) time headway in seconds. Default value is 1
+            :param additionalParam: list of additional parameters to configure the car-following model. There are two
+            values and they vary from model to model
+            :param emissionClasses: set of emission classes to be included into the distribution file
+            :param distProbability: set of distribution probabilities linked to the emission classes included
+        Returns:
+            it returns two path strings: a configuration path in which all simulation file are stored and a timeslot
+            related path
+        """
+        # Parametri cartelle
+        first_param = str(list(additionalParam.values())[0]) if len(additionalParam) > 0 else "NA"
+        second_param = str(list(additionalParam.values())[1]) if len(additionalParam) > 1 else "NA"
+
+        folder_name = f"{self.date}_{self.modelType}_{modelType}_{tau}_{first_param}_{second_param}/{self.timeSlot}"
+        conf_name = f"{self.date}_{self.modelType}_{modelType}_{tau}_{first_param}_{second_param}"
+        folder_path = os.path.join(SUMO_PATH, folder_name)
+        conf_path = os.path.join(SUMO_PATH, conf_name)
+
+        route_path = os.path.join(SUMO_PATH + "/routes", self.timeSlot)
+        self.simulator.changeRouteFilePath(route_path)
+        os.makedirs(folder_path, exist_ok=True)
+        self.simulator.changeTypePath(folder_path)
+
+        static_path = os.path.join(SUMO_PATH, "static")
+        self.simulator.changeAddPath(static_path)
+
+        # Output file
+        output_file = os.path.join(folder_path, "vtype.add.xml")
+        root = ET.Element("additional")
+        vtype_dist = ET.SubElement(root, "vTypeDistribution", {"id": "typedist1"})
+
+        self.carFollowingModelType = modelType
+
+        for i, (em_class, prob, fuel) in enumerate(zip(emissionClasses, distProbability, fueltype)):
+
+            vtypeID = f"type{em_class}"
+            # Aggiungi parametri specifici per modello
+            if modelType == "Krauss":
+                self.carFollowingModelType = "Krauss"
+                carFollowModel = "Krauss"
+                # vtypeID = "customModelCar"
+                if "sigma" in additionalParam:
+                    sigma = additionalParam["sigma"]
+                else:
+                    sigma = "0"  # perfect driving
+                if "sigmaStep" in additionalParam:
+                    sigmaStep = additionalParam["sigmaStep"]
+                else:
+                    sigmaStep = "step-length"
+                vtype ={
+                    "id": vtypeID,
+                    "carFollowModel": carFollowModel,
+                    "tau": tau,
+                    "sigma": sigma,
+                    "sigmaStep": sigmaStep
+                }
+            elif modelType == "IDM":
+                self.carFollowingModelType = "IDM"
+                carFollowModel = "IDM"
+                vtypeID = "customModelCar"
+                vtype =  {
+                    "id": vtypeID,
+                    "carFollowModel": carFollowModel,
+                    "tau": tau
+                }
+            elif modelType == "IDM":
+                self.carFollowingModelType = "IDM"
+                carFollowModel = "IDM"
+                vtypeID = "customModelCar"
+                if "delta" in additionalParam:
+                    delta = additionalParam["delta"]
+                else:
+                    delta = "4"
+                if "stepping" in additionalParam:
+                    stepping = additionalParam["stepping"]
+                else:
+                    stepping = "0.25"
+                vtype = {
+                    "id": vtypeID,
+                    "carFollowModel": carFollowModel,
+                    "tau": tau,
+                    "delta": delta,
+                    "stepping": stepping
+                }
+            elif modelType == "W99":
+                self.carFollowingModelType = "W99"
+                carFollowModel = "W99"
+                vtypeID = "customModelCar"
+                if "cc1" in additionalParam:
+                    cc1 = additionalParam["cc1"]
+                else:
+                    cc1 = "1.30"
+                if "cc2" in additionalParam:
+                    cc2 = additionalParam["cc2"]
+                else:
+                    cc2 = "8.0"
+                vtype = {
+                    "id": vtypeID,
+                    "carFollowModel": carFollowModel,
+                    "tau": tau,
+                    "cc1": cc1,
+                    "cc2": cc2
+                }
+
+            # Puoi anche aggiungere parametri fisici fittizi, se desideri (accel, maxSpeed, length...)
+            vtype["emissionClass"] = "HBEFA3/PC_"+ fuel +"_EU"+ str(em_class)
+            vtype["probability"] = str(prob)
+
+
+            ET.SubElement(vtype_dist, "vType", vtype)
+
+        # Salva file XML
+        tree = ET.ElementTree(root)
+        ET.indent(tree, '  ')
+        tree.write(output_file, encoding="utf-8", xml_declaration=True)
+        print(f"vTypeDistribution file created: {output_file}")
+
+        return folder_path, conf_path
 
 
 ### THESE ARE SOME PLOTTING FUNCTIONS.

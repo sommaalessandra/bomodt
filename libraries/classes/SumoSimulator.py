@@ -260,14 +260,14 @@ class Simulator:
         print("The path was set to " + routeFilePath)
 
 
-    def changeDetectorPath(self, detectorPath: str):
+    def changeAddPath(self, detectorPath: str):
         """
-        Changes the detector addional file path for the simulator.
+        Changes the static path where additional files are stored.
 
         This function checks if the provided route path is absolute. If it is not an absolute path,
         it converts it to an absolute path based on the current working directory.
-        After ensuring that the path exists, it updates the simulator's detector path and the
-        environment variable 'DETECTORPATH' to reflect the new path.
+        After ensuring that the path exists, it updates the simulator's static path and the
+        environment variable 'ADDPATH' to reflect the new path.
 
         :param routePath: The absolute route file path.
         :raises FileNotFoundError: If the given route path does not exist
@@ -277,7 +277,7 @@ class Simulator:
             print("Error: the given path does not exist.")
             return
         self.detectorPath = detectorPath
-        os.environ["DETECTORPATH"] = detectorPath
+        os.environ["ADDPATH"] = detectorPath
         print("The path was set to " + detectorPath)
 
     ### VEHICLE FUNCTIONS

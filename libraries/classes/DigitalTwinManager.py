@@ -5,6 +5,11 @@ import pandas as pd
 from libraries.classes.SumoSimulator import Simulator
 from libraries.classes.Planner import Planner
 from libraries.classes.DataManager import DataManager
+from libraries.classes.TrafficModeler import TrafficModeler
+from libraries.constants import SUMO_PATH, SUMO_NET_PATH, projectPath, EDGE_DATA_FILE_PATH, \
+    PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH
+from libraries.utils import statisticUtils
+from libraries.utils.preprocessingUtils import generateEdgeDataFile, generateEdgeDataFileByType
 from typing import Optional
 from libraries import constants
 import os
@@ -12,10 +17,10 @@ import subprocess
 from subprocess import Popen
 from PIL import Image
 import pytz
+import xml.etree.ElementTree as ET
 from datetime import datetime
-from libraries.classes.TrafficModeler import TrafficModeler
-from libraries.constants import SUMO_PATH, SUMO_NET_PATH, projectPath
-from libraries.utils import statisticUtils
+
+
 
 class DigitalTwinManager:
     """
@@ -82,7 +87,9 @@ class DigitalTwinManager:
             return scenarioFolder
 
     def configureCalibrateAndRun(self, dataFilePath: str, carFollowingModel: str, macroModelType: str, tau: str,
-                             parameters: {}, date: str, timeslot: [], edge_id: str):
+                            parameters: {}, date: str, timeslot: [], emissionClasses: list = [1,2,3,4,5,6],
+                            fuelType: list = ["G","G","G","D","D","D"], distribution: list = [0.1,0.1,0.2,0.2,0.2,0.2],
+                            totalCount = 10000):
         """
         Process of estimating traffic macroscopic values, calibrating traffic models and simulating them based on
         collected data. The function is designed to be applicable for an entire day's measurements or a smaller
@@ -97,7 +104,6 @@ class DigitalTwinManager:
             :param parameters: additional parameters that are used to calibrate the car following model
             :param date: the date, in yyyy-mm-dd format, in which to go to evaluate the measurements
             :param timeslot: The time slot for which historical traffic data is retrieved (e.g., "00:00-01:00").
-            :param edge_id:
 
         Returns: returns the folder path in which simulations and results are stored.
         """
@@ -124,8 +130,18 @@ class DigitalTwinManager:
             # basemodel.plotModel()
 
             # a car-following model is constructed, creating a specific file stored in the typeFilePath
-            typeFilePath, confPath = basemodel.vTypeGeneration(modelType=carFollowingModel, tau=tau,
-                                                           additionalParam=parameters)
+            ### THIS IS THE MONOMODAL VERSION
+            # typeFilePath, confPath = basemodel.vTypeGeneration(modelType=carFollowingModel, tau=tau,
+            #                                                additionalParam=parameters)
+            typeFilePath, confPath = basemodel.vTypeDistributionGeneration(modelType=carFollowingModel, tau=tau,
+                                                           additionalParam=parameters, emissionClasses=emissionClasses,
+                                                           fueltype=fuelType, distProbability=distribution)
+            # generateEdgeDataFile(PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, date=date, time_slot=timeSlotFolder)
+            generateEdgeDataFileByType(input_file=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                       vtype_file= typeFilePath + "/vtype.add.xml", date=date, time_slot=timeSlotFolder)
+            self.planner.scenarioGenerator.generateRoutesFromVTypes(routes_xml_path=typeFilePath,
+                                                                    inputEdgePath=EDGE_DATA_FILE_PATH,
+                                                                    timeSlot=timeSlotFolder, total_count=totalCount)
             # the model values are saved in a .csv file
             basemodel.saveTrafficData(outputDataPath=typeFilePath + "/model.csv")
             timeSlotFolder = timeSlotFolder.replace(':', '-')

@@ -457,6 +457,71 @@ def generateEdgeDataFile(input_file: str, date: str = "01/02/2024", time_slot: s
     tree.write(EDGE_DATA_FILE_PATH, encoding="UTF-8", xml_declaration=True)
     print(f"Edge data XML saved at '{EDGE_DATA_FILE_PATH}'")
 
+
+def generateEdgeDataFileByType(input_file: str, vtype_file: str, date: str = "01/02/2024", time_slot: str = "00:00-01:00", duration: str = '3600'):
+    """
+    Generate an XML `edgedata` file where the vehicle counts are split based on vType probabilities.
+    Args:
+        :param input_file: CSV file with edge vehicle counts.
+        :param vtype_file: Path to the vType distribution XML file.
+        :param date: Date to extract data.
+        :param time_slot: Time slot column to extract.
+        :param duration: Interval duration in seconds (default: 3600s).
+    """
+
+    import os
+    import pandas as pd
+    import xml.etree.ElementTree as ET
+
+    # === 1. Parse the vTypeDistribution file ===
+    vtype_tree = ET.parse(vtype_file)
+    vtype_root = vtype_tree.getroot()
+    vtype_dist = vtype_root.find("vTypeDistribution")
+
+    vtype_probs = []
+    for vtype in vtype_dist.findall("vType"):
+        vtype_id = vtype.attrib["id"]
+        prob = float(vtype.attrib["probability"])
+        vtype_probs.append((vtype_id, prob))
+
+    # === 2. Prepare XML structure ===
+    root = ET.Element("data")
+    interval = ET.SubElement(root, "interval", begin="0", end=duration)
+
+    # === 3. Read input CSV and filter rows ===
+    df = pd.read_csv(input_file, sep=';')
+    df = df[df['data'].str.contains(date)]
+
+    for index, row in df.iterrows():
+        edge_id = str(row['edge_id'])
+        first = int(time_slot[:2])
+        last = int(time_slot[6:8])
+
+        if last - first > 1:
+            total_count = sum(row[f"{hour:02d}:00-{(hour + 1) % 24:02d}:00"] for hour in range(first, last))
+        else:
+            total_count = row[time_slot]
+
+        total_count = int(total_count)
+
+        # === 4. Split count per vType and write ===
+        for vtype_id, prob in vtype_probs:
+            entered = int(round(total_count * prob))
+            if entered > 0:
+                ET.SubElement(interval, "edge", {
+                    "id": f"{edge_id}",
+                    "type": vtype_id,
+                    str(vtype_id)+"_entered": str(entered)
+                })
+
+    # === 5. Save file ===
+    os.makedirs(os.path.dirname(EDGE_DATA_FILE_PATH), exist_ok=True)
+    tree = ET.ElementTree(root)
+    ET.indent(tree, '  ')
+    tree.write(EDGE_DATA_FILE_PATH, encoding="UTF-8", xml_declaration=True)
+    print(f"[INFO] Edge data XML saved at '{EDGE_DATA_FILE_PATH}'")
+
+
 def dailyFilter(inputFilePath: str, date: str):
     """
     Filter data by a specific date and save to a predefined daily traffic flow file.

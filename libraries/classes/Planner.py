@@ -164,7 +164,8 @@ class ScenarioGenerator:
                         "--random-routing-factor", "10", "--period", "0.1"])
 
 
-    def generateRoute(self, inputEdgePath: str, timeSlot: str, withInitialRoute=True ):
+    def generateRoute(self, inputEdgePath: str, timeSlot: str, withInitialRoute=True, vType: str = "customModelCar",
+                      total_count=10000, output_path : str = None ):
         """
         Based on the input edgefile that contains the traffic counts detected by the specific traffic loops in the map,
         the function generates routes for the map (saved in :param sumoNetPath) that respect these crossing constraints
@@ -183,21 +184,96 @@ class ScenarioGenerator:
         folder_name = f"{timeSlot}"
         #folder_path = os.path.join("sumoenv/", folder_name)
         folder_path = os.path.join("sumoenv/routes", folder_name)
+        # folder_path = output_path
         os.makedirs(folder_path, exist_ok=True)
         random_route_path = folder_path
         outputRoutePath = folder_path + "/generatedRoutes.rou.xml"
         script = SUMO_TOOLS_PATH + "/routeSampler.py"
-        type = "type='customModel'"
+        type = "type='" + str(vType) + "'"
+        # process = subprocess.run([sys.executable, script, "--r", random_route_path + "/randomTrips.rou.xml",
+        #                           "--edgedata-files", inputEdgePath, "-o",
+        #                           folder_path + "/generatedRoutes.rou.xml", "--edgedata-attribute", "qPKW",
+        #                           "--write-flows", "number", "--attributes", type,
+        #                           "--total-count", str(total_count), "--optimize", "full", "--minimize-vehicles", "1",
+        #                           "--threads", "8", "--verbose"],
+        #                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True,
+        #                          env=os.environ.copy(), bufsize=1)
         process = subprocess.run([sys.executable, script, "--r", random_route_path + "/randomTrips.rou.xml",
                                   "--edgedata-files", inputEdgePath, "-o",
-                                  folder_path + "/generatedRoutes.rou.xml", "--edgedata-attribute", "qPKW",
+                                  output_path, "--edgedata-attribute", "qPKW",
                                   "--write-flows", "number", "--attributes", type,
-                                  "--total-count", "10000", "--optimize", "full", "--minimize-vehicles", "1",
-                                  "--threads", "8", "--verbose"],
+                                  "--total-count", str(total_count), "--optimize", "full", "--minimize-vehicles", "1",
+                                  "--threads", "8", "--verbose", "--prefix", vType, "--edgedata-attribute", vType + '_entered'],
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True,
                                  env=os.environ.copy(), bufsize=1)
 
         # process.wait()
+
+    def merge_route_files(self, file_paths, output_path):
+        """
+        Merges multiple SUMO .rou.xml files containing <flow> (or <vehicle>) elements,
+        sorting them by 'begin' attribute.
+        """
+        all_flows = []
+
+        for file in file_paths:
+            tree = ET.parse(file)
+            root = tree.getroot()
+
+            for elem in root:
+                if elem.tag == "flow":  # puoi aggiungere "vehicle" se ti serve
+                    all_flows.append(elem)
+
+        # Ordina i flow per tempo di inizio (begin)
+        all_flows.sort(key=lambda x: float(x.attrib.get("begin", 0.0)))
+
+        # Ricrea il root
+        merged_root = ET.Element("routes")
+        for flow in all_flows:
+            merged_root.append(flow)
+
+        # Salva su file
+        tree = ET.ElementTree(merged_root)
+        ET.indent(tree, "  ")
+        tree.write(output_path, encoding="utf-8", xml_declaration=True)
+        print(f"[INFO] Merged route file written to: {output_path}")
+
+    def generateRoutesFromVTypes(self, routes_xml_path: str, inputEdgePath: str, timeSlot: str, total_count: int = 10000):
+        """
+        For each vType in a vTypeDistribution XML, it generates a route file proportional to its probability,
+        and then merges all the results into a single generatedRoutes.rou.xml
+        """
+
+        timeSlot = timeSlot.replace(':', '-')
+        folder_path = os.path.join("sumoenv/routes", timeSlot)
+        os.makedirs(folder_path, exist_ok=True)
+        vtypes_xml_path = routes_xml_path + "/vtype.add.xml"
+        tree = ET.parse(vtypes_xml_path)
+        root = tree.getroot()
+        vtype_dist = root.find("vTypeDistribution")
+
+        partial_files = []
+
+        for vtype in vtype_dist.findall("vType"):
+            vtype_id = vtype.attrib["id"]
+            probability = float(vtype.attrib.get("probability", 0))
+            n_vehicles = int(probability * total_count)
+
+            print(f"Generating {n_vehicles} vehicles for {vtype_id}...")
+
+            partial_output = os.path.join(routes_xml_path, f"partial_{vtype_id}.rou.xml")
+            self.generateRoute(inputEdgePath=inputEdgePath,
+                               timeSlot=timeSlot,
+                               withInitialRoute=True,
+                               vType=vtype_id,
+                               total_count=n_vehicles,
+                               output_path=partial_output)
+            partial_files.append(partial_output)
+
+        # Merge all partial route files into a single one
+        final_output = os.path.join(folder_path, "generatedRoutes.rou.xml")
+        self.merge_route_files(file_paths=partial_files, output_path=final_output)
+        print(f"Final route file created at: {final_output}")
 
 
 class Planner:
