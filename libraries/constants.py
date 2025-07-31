@@ -47,6 +47,7 @@ DAILY_TRAFFIC_FLOW_FILE_PATH = PROCESSED_DATA_PATH + "/daily_flow.csv"
 
 ## SUMO ENVIRONMENT RELATED CONSTANTS
 SUMO_PATH = projectPath + "/sumoenv"
+SUMO_ROUTES_PATH = SUMO_PATH + "/routes"
 SUMO_NET_PATH = SUMO_PATH + "/static/full.net.xml"
 SUMO_DETECTORS_ADD_FILE_PATH = SUMO_PATH + "/static/detectors.add.xml"
 SUMO_OUTPUT_PATH = SUMO_PATH + "/output"

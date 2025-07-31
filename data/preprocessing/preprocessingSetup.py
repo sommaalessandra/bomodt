@@ -29,7 +29,7 @@ def run():
 
     #5. Filtering the dataset in a specific TIME WINDOW for testing purposes, and reordering the dataset in a chronological order.
     ##### Note: comment the following two code lines for working on the entire dataset.
-    filteringDataset(TRAFFIC_FLOW_ACCURATE_FILE_PATH, "02/01/2024", "02/02/2024", TRAFFIC_FLOW_ACCURATE_FILE_PATH)
+    filteringDataset(TRAFFIC_FLOW_ACCURATE_FILE_PATH, "02/01/2024", "04/30/2024", TRAFFIC_FLOW_ACCURATE_FILE_PATH)
     reorderDataset(TRAFFIC_FLOW_ACCURATE_FILE_PATH, TRAFFIC_FLOW_ACCURATE_FILE_PATH)
 
     #6. Generate correspondence between roadName and edge ID in SUMO net file and creating the SUMO detectors additional file for modeling real induction loop positions in SUMO net.
@@ -53,5 +53,5 @@ def run():
     #10. Generate example edgedata file to be used for route genaration
     #generateEdgeDataFile(PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, date='2024-02-01', time_slot='07:00-08:00')
 
-    dailyFilter(PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, date='01/02/2024')
+    # dailyFilter(PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, date='01/02/2024')
 

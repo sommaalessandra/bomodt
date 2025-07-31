@@ -170,8 +170,15 @@ class TrafficModeler:
                     continue
                 xml_file = folder_path + "/output/edgedata-output.xml"
                 print("PATH: " + str(xml_file))
-                tree = ET.parse(xml_file)
-                root = tree.getroot()
+                try:
+                    tree = ET.parse(xml_file)
+                    root = tree.getroot()
+                except FileNotFoundError:
+                    print(f"File {xml_file} not found → skip to the next folder")
+                    continue
+                except ET.ParseError:
+                    print(f"Errore nel parsing del file {xml_file} → salto alla prossima cartella")
+                    continue
 
                 # edge_id = '151824728#0'
                 # edge_id = '23288872#4' #the one used for experiments
@@ -223,8 +230,21 @@ class TrafficModeler:
                             'timeslot': folder_name
                         })
 
+                # Define the expected fieldnames in advance
+                expected_fields = [
+                    'edge_id', 'detected_density', 'detected_lane_density',
+                    'detected_speed', 'detected_flow', 'detected_count',
+                    'real_density', 'real_speed', 'real_flow', 'real_count', 'timeslot'
+                ]
+                if not edgeData:
+                    print(f"Nessun dato valido per {edge_id} in {folder_path} → salto")
+                    continue
                 detector_df = pd.DataFrame(edgeData)
-                fieldnames = edgeData[0].keys()
+                if not all(key in edgeData[0] for key in expected_fields):
+                    print(f"Incomplete data for {edge_id} in {folder_path} → jump to next")
+                    continue
+                else:
+                    fieldnames = edgeData[0].keys()
                 file_exists = os.path.isfile(outputFilePath)
                 with open(outputFilePath, mode='a', newline='', encoding='utf-8') as file:
                     writer = csv.DictWriter(file, fieldnames=fieldnames, delimiter=';')

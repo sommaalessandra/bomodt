@@ -164,7 +164,7 @@ class ScenarioGenerator:
                         "--random-routing-factor", "10", "--period", "0.1"])
 
 
-    def generateRoute(self, inputEdgePath: str, timeSlot: str, withInitialRoute=True ):
+    def generateRoute(self, inputEdgePath: str, timeSlot: str, withInitialRoute=True, totalCount = 10000):
         """
         Based on the input edgefile that contains the traffic counts detected by the specific traffic loops in the map,
         the function generates routes for the map (saved in :param sumoNetPath) that respect these crossing constraints
@@ -182,20 +182,21 @@ class ScenarioGenerator:
         #folder_name = f"{date}_{modelType}_{carFollowingModelType}/{timeSlot}"
         folder_name = f"{timeSlot}"
         #folder_path = os.path.join("sumoenv/", folder_name)
-        folder_path = os.path.join("sumoenv/routes", folder_name)
+
+        folder_path = os.path.join(constants.SUMO_ROUTES_PATH, folder_name)
         os.makedirs(folder_path, exist_ok=True)
         random_route_path = folder_path
         outputRoutePath = folder_path + "/generatedRoutes.rou.xml"
         script = SUMO_TOOLS_PATH + "/routeSampler.py"
         type = "type='customModel'"
         process = subprocess.run([sys.executable, script, "--r", random_route_path + "/randomTrips.rou.xml",
-                                  "--edgedata-files", inputEdgePath, "-o",
-                                  folder_path + "/generatedRoutes.rou.xml", "--edgedata-attribute", "qPKW",
-                                  "--write-flows", "number", "--attributes", type,
-                                  "--total-count", "10000", "--optimize", "full", "--minimize-vehicles", "1",
-                                  "--threads", "8", "--verbose"],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True,
-                                 env=os.environ.copy(), bufsize=1)
+                      "--edgedata-files", inputEdgePath, "-o",
+                      outputRoutePath, "--edgedata-attribute", "qPKW",
+                      "--write-flows", "number", "--attributes", type,
+                      "--total-count", str(totalCount), "--optimize", "full", "--minimize-vehicles", "1",
+                      "--threads", "8", "--verbose"],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True,
+                     env=os.environ.copy(), bufsize=1)
 
         # process.wait()
 

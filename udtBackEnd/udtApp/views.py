@@ -190,7 +190,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot, edge_id='23288872#4')
+                                                  date=params['date'], timeslot=time_slot)
                 print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'IDM':
                 additional_param = {'delta': str(data['delta']),
@@ -199,8 +199,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot,
-                                                  edge_id='23288872#4')
+                                                  date=params['date'], timeslot=time_slot)
                 print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'W99':
 
@@ -210,8 +209,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot,
-                                                  edge_id='23288872#4')
+                                                  date=params['date'], timeslot=time_slot)
                 print("Executed simulation " + str(folderResult))
             params.update(additional_param)
             # Saving Model parameter data into the output folder

@@ -14,8 +14,9 @@ from PIL import Image
 import pytz
 from datetime import datetime
 from libraries.classes.TrafficModeler import TrafficModeler
-from libraries.constants import SUMO_PATH, SUMO_NET_PATH, projectPath
+from libraries.constants import SUMO_PATH, SUMO_NET_PATH, SUMO_ROUTES_PATH, projectPath, PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, EDGE_DATA_FILE_PATH
 from libraries.utils import statisticUtils
+from libraries.utils.preprocessingUtils import generateEdgeDataFile
 
 class DigitalTwinManager:
     """
@@ -82,7 +83,7 @@ class DigitalTwinManager:
             return scenarioFolder
 
     def configureCalibrateAndRun(self, dataFilePath: str, carFollowingModel: str, macroModelType: str, tau: str,
-                             parameters: {}, date: str, timeslot: [], edge_id: str):
+                             parameters: {}, date: str, timeslot: [], totalCount = 10000):
         """
         Process of estimating traffic macroscopic values, calibrating traffic models and simulating them based on
         collected data. The function is designed to be applicable for an entire day's measurements or a smaller
@@ -97,7 +98,6 @@ class DigitalTwinManager:
             :param parameters: additional parameters that are used to calibrate the car following model
             :param date: the date, in yyyy-mm-dd format, in which to go to evaluate the measurements
             :param timeslot: The time slot for which historical traffic data is retrieved (e.g., "00:00-01:00").
-            :param edge_id:
 
         Returns: returns the folder path in which simulations and results are stored.
         """
@@ -126,6 +126,9 @@ class DigitalTwinManager:
             # a car-following model is constructed, creating a specific file stored in the typeFilePath
             typeFilePath, confPath = basemodel.vTypeGeneration(modelType=carFollowingModel, tau=tau,
                                                            additionalParam=parameters)
+            generateEdgeDataFile(input_file=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH, date=date, time_slot=timeSlotFolder)
+            self.planner.scenarioGenerator.generateRoute(inputEdgePath=EDGE_DATA_FILE_PATH,timeSlot=timeSlotFolder,
+                                                         totalCount=totalCount)
             # the model values are saved in a .csv file
             basemodel.saveTrafficData(outputDataPath=typeFilePath + "/model.csv")
             timeSlotFolder = timeSlotFolder.replace(':', '-')
@@ -142,7 +145,7 @@ class DigitalTwinManager:
             print(route_folder_path)
             self.sumoSimulator.changeRouteFilePath(route_folder_path)
             self.sumoSimulator.start(activeGui=False, logFilePath=self.sumoSimulator.logFile)
-            # time.sleep(10)
+            time.sleep(10)
 
         # confPath = projectPath + "/" + confPath
         paramvalues = list(parameters.values())
