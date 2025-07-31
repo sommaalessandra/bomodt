@@ -37,8 +37,8 @@ if __name__ == "__main__":
 
     #### Comment/decomment these two code lines to run the physical system.
     # TODO: thread-multiprocessing
-    # roads, files = setupPhysicalSystem(IoTAgent)
-    # startPhysicalSystem(roads)
+    roads, files = setupPhysicalSystem(IoTAgent)
+    #startPhysicalSystem(roads)
 
     # 2. The DigitalTwinManager needs i) a DataManager for accessing data; ii) a SumoSimulator for running simulations
     #    iii) a Planner including a ScenarioGenerator for generating sumoenv scenarios.
@@ -49,6 +49,10 @@ if __name__ == "__main__":
         username="postgres",
         password="postgres"
     )
+    timescaleManager.createView(tableName='ethttps://smartdatamodels.org/datamodel.transportation/trafficf',
+    viewName='mtopeniot.traffic_view')
+    timescaleManager.createView(tableName='ethttps://smartdatamodels.org/datamodel.transportation/roadsegm',
+    viewName='mtopeniot.roadsegm_view')
     dataManager = DataManager("TwinDataManager")
     dataManager.addDBManager(timescaleManager)
 
