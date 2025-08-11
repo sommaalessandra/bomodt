@@ -1,3 +1,5 @@
+import time
+
 import libraries.constants
 from libraries.utils.generalUtils import *
 from libraries.utils.preprocessingUtils import *
@@ -12,8 +14,155 @@ from libraries.classes.TrafficModeler import TrafficModeler
 from mobilityvenv.MobilityVirtualEnvironment import setupPhysicalSystem, startPhysicalSystem
 from data.preprocessing import preprocessingSetup
 
+class TerminalSystem:
+    def __init__(self):
+        envVar = loadEnvVar(CONTAINER_ENV_FILE_PATH)
+        self.iotanorth = envVar.get("IOTA_NORTH_PORT")
+        self.iotasouth = envVar.get("IOTA_SOUTH_PORT")
+        self.cbport = envVar.get("ORIONLD_PORT")
+
+        self.timescalePort = envVar.get("TIMESCALE_DB_PORT")
+        self.quantumleapPort = envVar.get("QUANTUMLEAP_PORT")
+        self.contextBroker = Broker(pn=self.cbport, pnt=None, host="localhost", fiwareservice="openiot")
+        self.cbConnection = self.contextBroker.createConnection()
+        self.IoTAgent = Agent(aid="01", hostname="localhost", cb_port=self.cbport, south_port=self.iotasouth, northport=self.iotanorth,
+                         fw_service="openiot", fw_path="/")
+        self.quantumLeapManager = QuantumLeapManager(containerName="fiware-quantumleap", cbPort=self.cbport,
+                                                quantumleapPort=self.quantumleapPort)
+
+        self.quantumLeapManager.createQuantumLeapSubscription(cbConnection=self.cbConnection, entityType="RoadSegment",
+                                                         attribute="trafficFlow",
+                                                         description="Notify me of Traffic Flow")
+        self.quantumLeapManager.createQuantumLeapSubscription(cbConnection=self.cbConnection, entityType="trafficflowobserved",
+                                                         attribute="trafficFlow",
+                                                         description="Notify me of Traffic Flow")
+        self.quantumLeapManager.createQuantumLeapSubscription(cbConnection=self.cbConnection, entityType="Device",
+                                                         attribute="trafficFlow",
+                                                         description="Notify me of traffic Flow")
+        print("System initialized")
+
+        self.timescaleManager = TimescaleManager(
+            host="localhost",
+            port=self.timescalePort,
+            dbname="quantumleap",
+            username="postgres",
+            password="postgres"
+        )
+        self.timescaleManager.createView(tableName='ethttps://smartdatamodels.org/datamodel.transportation/trafficf',
+                                    viewName='mtopeniot.traffic_view')
+        self.timescaleManager.createView(tableName='ethttps://smartdatamodels.org/datamodel.transportation/roadsegm',
+                                    viewName='mtopeniot.roadsegm_view')
+        self.dataManager = DataManager("TwinDataManager")
+        self.dataManager.addDBManager(self.timescaleManager)
+
+        self.configurationPath = SUMO_PATH + "/standalone"
+        self.logFile = SUMO_PATH + "/standalone/command_log.txt"
+
+        self.detector_output = os.path.abspath(SUMO_PATH + "/output")
+        os.makedirs(self.detector_output, exist_ok=True)
+
+        self.sumoSimulator = Simulator(configurationPath=self.configurationPath, logFile=self.logFile)
+        self.twinPlanner = Planner(simulator=self.sumoSimulator)
+        self.twinManager = DigitalTwinManager(dataManager=self.dataManager, simulator=self.sumoSimulator,
+                                         sumoConfigurationPath=self.configurationPath, sumoLogFile=self.logFile)
+
+    def runPreprocessingSetup(self):
+        print("NOTE: it is recommended to perform this operation once and only once ")
+        time.sleep(3)
+        print("Starting preprocessing Setup...")
+        preprocessingSetup.run()
+
+
+    def setupAndRunSystem(self):
+
+        print("Setup of physical Emulator system")
+        time.sleep(1)
+        roads, files = setupPhysicalSystem(self.IoTAgent)
+        print("Setup Complete.")
+        print("Start of Emulation")
+        time.sleep(1)
+        startPhysicalSystem(roads)
+
+    def runCalibrationAndSimulation(self):
+
+        simulationDate = input("Select a Simulation Date in yyyy-mm-dd format (default 2024-02-01): ") or '2024-02-01'
+        firstHour = input("Select starting hour (default 0): ") or "0"
+        lastHour = input("Select ending hour (default 24): ") or "24"
+        timeslot = [int(firstHour), int(lastHour)]
+        carfollowing = input("Select Car Following model [1: Krauss, 2: IDM, 3: Wiedemann] (default Krauss): ") or "1"
+        tau = input("Select headway time parameter (default 1s): ") or "1"
+        macroModelId = input("Select Car Following model [1: Greenshield, 2: Underwood, 3: VanAerde] (default Greenshield): ") or "1"
+        if macroModelId == "1":
+            macroModelType = "greenshield"
+        elif macroModelId == "2":
+            macroModelType = "underwood"
+        elif macroModelId == "3":
+            macroModelType = "vanaerde"
+
+        if carfollowing == "1":
+            carFollowingModel='Krauss'
+            sigma = input("Select sigma value (default: 0.5): ") or "0.5"
+            sigmaStep = input("Select sigmaStep value (default: 1)") or "1"
+            print("Simulation process starting...")
+            time.sleep(1)
+            self.twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                             carFollowingModel=carFollowingModel,
+                                             macroModelType=macroModelType, tau=tau,
+                                             parameters={"sigma": sigma, "sigmaStep": sigmaStep},
+                                             date=simulationDate, timeslot=timeslot)
+        elif carfollowing == "2":
+            carFollowingModel='IDM'
+            delta = input("Select delta value (default: 4): ") or "4"
+            stepping = input("Select stepping value (default: 0.25)") or "0.25"
+            print("Simulation process starting...")
+            time.sleep(1)
+            self.twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                             carFollowingModel=carFollowingModel,
+                                             macroModelType=macroModelType, tau=tau,
+                                             parameters={"delta": delta, "sigmaStep": stepping},
+                                             date=simulationDate, timeslot=timeslot)
+        elif carfollowing == "3":
+            carFollowingModel='W99'
+            cc1 = input("Select cc1 value (default: 1.3): ") or "1.3"
+            cc2 = input("Select cc2 value (default: 8)") or "8"
+            print("Simulation process starting...")
+            time.sleep(1)
+            self.twinManager.configureCalibrateAndRun(dataFilePath=PROCESSED_TRAFFIC_FLOW_EDGE_FILE_PATH,
+                                             carFollowingModel=carFollowingModel,
+                                             macroModelType=macroModelType, tau=tau,
+                                             parameters={"cc1": cc1, "cc2": cc2},
+                                             date=simulationDate, timeslot=timeslot)
+
+
+    def showMenu(self):
+        print("\nSelect an operation:")
+        print("1. Run Preprocessing Operation (to be run only once)")
+        print("2. Setup and Run whole System")
+        print("3. Run Calibration and Simulation Task")
+        print("4. Run Legacy Main")
+        print("5. Exit")
 
 if __name__ == "__main__":
+
+    while True:
+        system = TerminalSystem()
+        system.showMenu()
+        choice = input("Choose [1-5]: ")
+
+        if choice == '1':
+            system.runPreprocessingSetup()
+        elif choice == '2':
+            system.setupAndRunSystem()
+        elif choice == '3':
+            system.runCalibrationAndSimulation()
+        elif choice == '4':
+            print("Starting legacy main...")
+            break
+        elif choice == '5':
+            print("Exiting...")
+            exit(0)
+        else:
+            print("Invalid choice, try again.")
 
     # 0. Pre-processing phase (to be run only once)
     # preprocessingSetup.run()
