@@ -18,6 +18,11 @@ TIME_SLOTS = [(i, f"{i}:00") for i in range(0, 25)]  # Da 00 a 24
 class ConfigForm(forms.Form):
     macromodel = forms.ChoiceField(choices=MACROMODEL_CHOICES, label="Macromodel")
     car_following_model = forms.ChoiceField(choices=CAR_FOLLOWING_MODEL_CHOICES, label="Car Following Model")
+    total_count = forms.IntegerField(
+        label="Total Count",
+        min_value=100, max_value=100000, initial=10000,
+        widget=forms.NumberInput(attrs={'step': '100'})
+    )
     tau = forms.FloatField(
         label="Tau",
         min_value=0.1, max_value=10, initial=1,

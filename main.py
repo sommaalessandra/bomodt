@@ -187,7 +187,7 @@ if __name__ == "__main__":
     #### Comment/decomment these two code lines to run the physical system.
     # TODO: thread-multiprocessing
     roads, files = setupPhysicalSystem(IoTAgent)
-    #startPhysicalSystem(roads)
+    startPhysicalSystem(roads)
 
     # 2. The DigitalTwinManager needs i) a DataManager for accessing data; ii) a SumoSimulator for running simulations
     #    iii) a Planner including a ScenarioGenerator for generating sumoenv scenarios.

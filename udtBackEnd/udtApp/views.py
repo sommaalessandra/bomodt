@@ -177,6 +177,7 @@ def simulationModeler(request):
             params = {
                 'macromodel': data['macromodel'],
                 'car_following_model': data['car_following_model'],
+                'total_count': data['total_count'],
                 'tau': str(data['tau']),
                 'time_slot': time_slot,
                 'date': data['data'].strftime('%Y-%m-%d'),
@@ -190,7 +191,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot)
+                                                  date=params['date'], timeslot=time_slot, totalCount=params['total_count'])
                 print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'IDM':
                 additional_param = {'delta': str(data['delta']),
@@ -199,7 +200,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot)
+                                                  date=params['date'], timeslot=time_slot, totalCount=params['total_count'])
                 print("Executed simulation " + str(folderResult))
             elif data['car_following_model'] == 'W99':
 
@@ -209,7 +210,7 @@ def simulationModeler(request):
                                                   macroModelType=params['macromodel'],
                                                   carFollowingModel=params['car_following_model'], tau=params['tau'],
                                                   parameters=additional_param,
-                                                  date=params['date'], timeslot=time_slot)
+                                                  date=params['date'], timeslot=time_slot, totalCount=params['total_count'])
                 print("Executed simulation " + str(folderResult))
             params.update(additional_param)
             # Saving Model parameter data into the output folder
@@ -256,7 +257,7 @@ def simulationResults(request):
             match = FOLDER_PATTERN.match(folder)
             if match:
                 print(match)
-                display_name = match.group(1).replace("_", " ").title()  # Rimuove underscore
+                display_name = match.group(0).replace("_", " ").title()  # Rimuove underscore
                 folders.append({"full_name": folder, "display_name": display_name})
 
     return render(request, "udtApp/simulationResults.html", {"folders": folders})
@@ -309,7 +310,7 @@ def serveResults(request, folder_name):
         result_image_url = '/static/img/mock_plot1.png'  # assicurati di avere questa immagine nella cartella static
 
         # URL della dashboard grafana (modifica con la tua se necessario)
-        grafana_url = "http://localhost:3000/goto/Yj8smlsHk?orgId=1"
+        grafana_url = "http://localhost:3000/d/l8-g1tiHk/"
 
         context = {
             'calibration': calibration_params,
